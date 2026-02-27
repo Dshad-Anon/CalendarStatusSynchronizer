@@ -1,9 +1,11 @@
-{ 
+{
   "compilerOptions": {
     "rootDir": "./src",
     "outDir": "./dist",
     "module": "esnext",
-    "lib": ["ESNext"],
+    "lib": [
+      "ESNext"
+    ],
     "target": "esnext",
     "strict": true,
     "esModuleInterop": true,
@@ -14,10 +16,13 @@
     "noImplicitAny": true,
     "strictNullChecks": true,
     "strictFunctionTypes": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
     "skipLibCheck": true,
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist"]
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
 }
