@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import express from "express";
 import { connectDatabase } from "./config/database";
 import authRoutes from "./routes/auth";
+import { authenticate } from "./middleware/auth";
 
 dotenv.config();
 
@@ -13,8 +14,11 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
-app.use("/api/auth", authRoutes);
 
+app.use("/api/auth", authRoutes);
+app.get("/api/test/protected", authenticate, (req:any , res) => {
+  res.json({ message: "Access granted to protected route", userId: req.userId });
+});
 // Health check
 app.get("/health", (req, res) => {
   res.json({
