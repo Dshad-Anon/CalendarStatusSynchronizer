@@ -1,7 +1,5 @@
-import { config } from "../config/config";
 import { google } from "googleapis";
-
-
+import { config } from "../config/config";
 
 // OAuth2 client for login flow( reditect to frontend after successful login)
 export const loginOAuth2Client = new google.auth.OAuth2(
@@ -17,50 +15,50 @@ export const oauth2Client = new google.auth.OAuth2(
   config.google.redirectUri
 );
 
-// Genrate OAuth URL for login flow and calendar connection 
+// Genrate OAuth URL for login flow and calendar connection
 export const getGoogleLoginAuthUrl = () => {
   return loginOAuth2Client.generateAuthUrl({
     access_type: "offline",
     scope: [
-    "https://www.googleapis.com/auth/userinfo.profile",
-    "https://www.googleapis.com/auth/userinfo.email",
+      "https://www.googleapis.com/auth/userinfo.profile",
+      "https://www.googleapis.com/auth/userinfo.email"
     ],
-    prompt: "consent",
+    prompt: "consent"
   });
 };
-  
-export const getGoogleCalendarAuthUrl = () => {
+
+export const getGoogleAuthUrl = () => {
   return oauth2Client.generateAuthUrl({
     access_type: "offline",
     scope: [
       "https://www.googleapis.com/auth/calendar",
       "https://www.googleapis.com/auth/calendar.events"
     ],
-    prompt: "consent",
+    prompt: "consent"
   });
 };
 
 // Exchange authorization code for access token and get user profile information
 
-export const getTokensFromCode = async(code:string, isLogin = false) => {
+export const getTokensFromCode = async (code: string, isLogin = false) => {
   const client = isLogin ? loginOAuth2Client : oauth2Client;
-  const {tokens} = await client.getToken(code);
+  const { tokens } = await client.getToken(code);
   return tokens;
-}
+};
 
 export const getGoogleUserProfile = async (accessToken: string) => {
   const oauth2 = google.oauth2({
-    auth : loginOAuth2Client,
-    version: "v2",
+    auth: loginOAuth2Client,
+    version: "v2"
   });
 
   loginOAuth2Client.setCredentials({ access_token: accessToken });
 
-  const {data} = await oauth2.userinfo.get();
+  const { data } = await oauth2.userinfo.get();
 
-  return{
+  return {
     googleId: data.id,
     email: data.email,
-    name: data.name,
+    name: data.name
   };
 };

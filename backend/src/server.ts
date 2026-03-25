@@ -4,6 +4,8 @@ import express from "express";
 import { connectDatabase } from "./config/database";
 import { authenticate } from "./middleware/auth";
 import authRoutes from "./routes/auth";
+import calendarRoutes from "./routes/calendar";
+import oauthRoutes from "./routes/oauth";
 
 dotenv.config();
 
@@ -15,6 +17,10 @@ app.use(cors());
 app.use(express.json());
 
 app.use("/api/auth", authRoutes);
+app.use("/api/calendar", calendarRoutes);
+app.use("/api/oauth", oauthRoutes);
+
+
 app.get("/api/test/protected", authenticate, (req: any, res) => {
   res.json({ message: "Access granted to protected route", userId: req.userId });
 });
