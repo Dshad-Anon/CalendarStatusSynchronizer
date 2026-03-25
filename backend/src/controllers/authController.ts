@@ -3,7 +3,7 @@ import type { Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import { config } from "../config/config";
 import User from "../models/User";
-import { getTokensFromCode, getGoogleUserProfile } from "../services/googleService";
+import { getGoogleUserProfile, getTokensFromCode } from "../services/googleService";
 
 /**
  * Registers a new user by hashing the password and generating a JWT token.
@@ -92,7 +92,6 @@ export const login = async (req: Request, res: Response) => {
   }
 };
 
-
 /**
  * Google login function that authenticates a user using Google OAuth.
  * @param req  Request object containing email and name in the body.
@@ -101,10 +100,11 @@ export const login = async (req: Request, res: Response) => {
  */
 export const googleLogin = async (req: Request, res: Response) => {
   try {
-    const {code} = req.body;
-    if (!code) {
+    const { code: rawCode } = req.body;
+    if (!rawCode) {
       return res.status(400).json({ message: "Authorization code is required" });
     }
+    const code = decodeURIComponent(rawCode);
     // Exchange code for tokens
     const tokens = await getTokensFromCode(code, true);
     if (!tokens.access_token) {
@@ -132,11 +132,7 @@ export const googleLogin = async (req: Request, res: Response) => {
       await user.save();
     }
 
-    const token = jwt.sign(
-      { userId: user._id },
-      config.jwtSecret,
-      { expiresIn: "1hr" }
-    );
+    const token = jwt.sign({ userId: user._id }, config.jwtSecret, { expiresIn: "1hr" });
     res.json({
       token,
       user: {
@@ -145,8 +141,8 @@ export const googleLogin = async (req: Request, res: Response) => {
         email: user.email
       }
     });
-
   } catch (error) {
     console.error("Google login error:", error);
     res.status(500).json({ message: "Google Authentication Failed." });
-  }}
+  }
+};
