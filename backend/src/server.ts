@@ -6,6 +6,7 @@ import { authenticate } from "./middleware/auth";
 import authRoutes from "./routes/auth";
 import calendarRoutes from "./routes/calendar";
 import oauthRoutes from "./routes/oauth";
+import ruleRoutes from "./routes/rule";
 
 dotenv.config();
 
@@ -19,6 +20,7 @@ app.use(express.json());
 app.use("/api/auth", authRoutes);
 app.use("/api/calendar", calendarRoutes);
 app.use("/api/oauth", oauthRoutes);
+app.use("/api/rules", ruleRoutes);
 
 
 app.get("/api/test/protected", authenticate, (req: any, res) => {
