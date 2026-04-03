@@ -15,7 +15,7 @@ export const oauth2Client = new google.auth.OAuth2(
   config.google.redirectUri
 );
 
-// Genrate OAuth URL for login flow and calendar connection
+// Generate OAuth URL for login flow and calendar connection
 export const getGoogleLoginAuthUrl = () => {
   return loginOAuth2Client.generateAuthUrl({
     access_type: "offline",
@@ -23,7 +23,8 @@ export const getGoogleLoginAuthUrl = () => {
       "https://www.googleapis.com/auth/userinfo.profile",
       "https://www.googleapis.com/auth/userinfo.email"
     ],
-    prompt: "consent"
+    prompt: "consent",
+    state: "google_login"
   });
 };
 
