@@ -1,15 +1,15 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { Layout } from "./components/Layout";
-
+import { Calendar } from "./pages/Calendar";
+import { Dashboard } from "./pages/Dashboard";
 import { Login } from "./pages/Login";
-
 import { Register } from "./pages/Register";
 
 // Protected route wrapper to wrap the routes that require authentication.
-// const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-//   const isAuthenticated = !!localStorage.getItem("token");
-//   return isAuthenticated ? <>{children}</> : <Navigate to="/login" />;
-// };
+const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+  const isAuthenticated = !!localStorage.getItem("token");
+  return isAuthenticated ? <>{children}</> : <Navigate to="/login" />;
+};
 
 function App() {
   return (
@@ -18,6 +18,22 @@ function App() {
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/calendar"
+            element={
+              <ProtectedRoute>
+                <Calendar />
+              </ProtectedRoute>
+            }
+          />
           <Route path="/" element={<Navigate to="/dashboard" />} />
         </Routes>
       </Layout>
