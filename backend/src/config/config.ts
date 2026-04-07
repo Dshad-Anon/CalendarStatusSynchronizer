@@ -18,4 +18,9 @@ export const config = {
         redirectUri: process.env.GOOGLE_REDIRECT_URI,
         loginRedirectUri: process.env.GOOGLE_LOGIN_REDIRECT_URI,
     },
+    slack: {
+        clientId: process.env.SLACK_CLIENT_ID,
+        clientSecret: process.env.SLACK_CLIENT_SECRET,
+        redirectUri: process.env.SLACK_REDIRECT_URI,
+    }
 };
