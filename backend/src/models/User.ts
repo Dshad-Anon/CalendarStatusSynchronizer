@@ -4,8 +4,9 @@ import mongoose, { type Document, Schema } from "mongoose";
 export interface IUser extends Document {
   _id: mongoose.Types.ObjectId;
   email: string;
-  password: string;
+  password?: string;
   name: string;
+  googleId?: string;
   createdAt: Date;
   updatedAt: Date;
   lastSync: Date | null;
@@ -48,13 +49,17 @@ const userSchema = new Schema<IUser>(
     },
     password: {
       type: String,
-      required: true,
+      required: false,
       minlength: 6
     },
     name: {
       type: String,
       required: true,
       trim: true
+    },
+    googleId: {
+      type: String,
+      default: null
     },
     lastSync: {
       type: Date,
@@ -95,7 +100,7 @@ const userSchema = new Schema<IUser>(
 );
 
 userSchema.pre("save", async function () {
-  if (!this.isModified("password")) {
+  if (!this.isModified("password") || !this.password) {
     return;
   }
 
