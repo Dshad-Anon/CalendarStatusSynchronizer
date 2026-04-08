@@ -7,6 +7,16 @@ import { disableEmailAutoReply, setEmailAutoReply } from "../services/emailServi
 
 const router: Router = express.Router();
 
+/**
+ * @route PATCH /email
+ * @description Update email configuration settings for the authenticated user
+ * @param {Object} req - Express request object with authenticated user
+ * @param {string} [req.body.enabled] - Boolean to enable/disable email monitoring
+ * @param {string} [req.body.autoReplyMessage] - Custom auto-reply message text
+ * @param {Response} res - Express response object
+ * @returns {Object} Success response with updated emailConfig
+ * @throws Error codes
+ */
 router.patch(
   "/email",
   authenticate,
@@ -52,6 +62,14 @@ router.patch(
   }
 );
 
+/**
+ * @route GET /email
+ * @description Retrieve email configuration for the authenticated user
+ * @param {Object} req - Express request object with authenticated user
+ * @param {Response} res - Express response object
+ * @returns {Object} Email configuration object
+ * @throws error codes
+ */
 router.get("/email", authenticate, async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     if (!req.user) {
@@ -71,6 +89,17 @@ router.get("/email", authenticate, async (req: AuthRequest, res: Response): Prom
   }
 });
 
+/**
+ * @route POST /email/auto-reply
+ * @description Enable Gmail auto-reply for the authenticated user
+ * @param {Object} req - Express request object with authenticated user
+ * @param {string} req.body.subject - Auto-reply subject line (required)
+ * @param {string} req.body.message - Auto-reply message body (required)
+ * @param {string} [req.body.untilTime] - ISO8601 datetime to disable auto-reply automatically
+ * @param {Response} res - Express response object
+ * @returns {Object} Success response with emailAutoReply configuration
+ * @throws error codes
+ */
 router.post(
   "/email/auto-reply",
   authenticate,
@@ -122,6 +151,14 @@ router.post(
   }
 );
 
+/**
+ * @route DELETE /email/auto-reply
+ * @description Disable Gmail auto-reply for the authenticated user
+ * @param {Object} req - Express request object with authenticated user
+ * @param {Response} res - Express response object
+ * @returns {Object} Success message
+ * @throws error codes
+ */
 router.delete(
   "/email/auto-reply",
   authenticate,
@@ -141,6 +178,14 @@ router.delete(
   }
 );
 
+/**
+ * @route GET /email/auto-reply
+ * @description Retrieve Gmail auto-reply settings for the authenticated user
+ * @param {Object} req - Express request object with authenticated user
+ * @param {Response} res - Express response object
+ * @returns {Object} emailAutoReply configuration and Google connection status
+ * @throws error codes
+ */
 router.get(
   "/email/auto-reply",
   authenticate,
@@ -167,6 +212,14 @@ router.get(
   }
 );
 
+/**
+ * @route POST /email/check-now
+ * @description Manually trigger email monitoring and auto-reply check for the authenticated user
+ * @param {Object} req - Express request object with authenticated user
+ * @param {Response} res - Express response object
+ * @returns {Object} Success message indicating monitoring completion
+ * @throws error codes
+ */
 router.post(
   "/email/check-now",
   authenticate,
