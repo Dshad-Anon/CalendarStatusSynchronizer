@@ -118,3 +118,46 @@ const applyDefaultStatus = async (user: IUser, event: ICalendarEvent): Promise<v
   });
 };
 
+export const processUserStatus = async (userId: string): Promise<void> => {
+  try {
+    const user = await User.findById(userId);
+    if (!user) return;
+
+    const currentEvents = await calendarSyncService.getCurrentEvents(userId);
+    if (!currentEvents.length) {
+      if (user.slackTokens?.accessToken) {
+        await slackService.clearSlackStatus(user);
+        await logStatusUpdate({
+          userId,
+          platform: "slack",
+          action: "clear_status"
+        });
+      }
+      return;
+    }
+
+    for (const event of currentEvents) {
+      const rules = await automationEngine.findMatchingRules(userId, event);
+      if (rules.length > 0) {
+        await applyRuleActions(user, event, rules[0]);
+      } else {
+        await applyDefaultStatus(user, event);
+      }
+    }
+  } catch (error: any) {
+    logger.error(`Failed processing status for user ${userId}:`, error);
+  }
+};
+
+export const processAllUsers = async (): Promise<void> => {
+  const users = await User.find({
+    $or: [
+      { "slackTokens.accessToken": { $exists: true, $ne: null } },
+      { "emailConfig.enabled": true }
+    ]
+  });
+
+  for (const user of users) {
+    await processUserStatus(user._id.toString());
+  }
+};
