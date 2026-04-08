@@ -7,6 +7,7 @@ import authRoutes from "./routes/auth";
 import calendarRoutes from "./routes/calendar";
 import oauthRoutes from "./routes/oauth";
 import ruleRoutes from "./routes/rule";
+import settingsRoutes from "./routes/settings";
 
 dotenv.config();
 
@@ -21,7 +22,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/calendar", calendarRoutes);
 app.use("/api/oauth", oauthRoutes);
 app.use("/api/rules", ruleRoutes);
-
+app.use("/api/settings", settingsRoutes);
 
 app.get("/api/test/protected", authenticate, (req: any, res) => {
   res.json({ message: "Access granted to protected route", userId: req.userId });

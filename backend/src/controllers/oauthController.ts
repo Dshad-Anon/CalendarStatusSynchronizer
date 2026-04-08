@@ -11,16 +11,16 @@ export const googleCallback = async (req: AuthRequest, res: Response) => {
     if (!code || typeof code !== "string") {
       return res.redirect(`${config.frontendUrl}/settings?error=no_code`);
     }
-    if (!req.userId) {
+    if (!req.user) {
       return res.redirect(`${config.frontendUrl}/settings?error=unauthorized`);
     }
 
     // Exchange code for tokens
     const tokens = await getTokensFromCode(code, false);
-    logger.info(`Google OAuth tokens received for user: ${req.userId}`);
+    logger.info(`Google OAuth tokens received for user: ${req.user}`);
 
     // Save tokens with encryption
-    await saveGoogleTokens(req.userId, tokens);
+    await saveGoogleTokens(req.user._id.toString(), tokens);
 
     res.redirect(`${config.frontendUrl}/settings?success=calendar_connected`);
   } catch (error) {
