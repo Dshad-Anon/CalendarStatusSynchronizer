@@ -1,23 +1,36 @@
 import type { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import { config } from "../config/config";
+import User, { type IUser } from "../models/User";
 
 export interface AuthRequest extends Request {
-  userId?: string;
+  user?: IUser;
 }
-//256 bits long and random generated jsonwebtoken is used here.
-export const authenticate = (req: AuthRequest, res: Response, next: NextFunction) => {
+
+export const authenticate = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
   try {
-    const token = req.headers.authorization?.split(" ")[1];
+    const token = req.header("Authorization")?.replace("Bearer ", "");
 
     if (!token) {
-      return res.status(401).json({ message: "Authentication required" });
+      res.status(401).json({ error: "Authentication required" });
+      return;
     }
 
-    const decoded = jwt.verify(token, config.jwtSecret as string) as { userId: string };
-    req.userId = decoded.userId;
+    const decoded = jwt.verify(token, config.jwtSecret) as { userId: string };
+    const user = await User.findById(decoded.userId);
+
+    if (!user) {
+      res.status(401).json({ error: "User not found" });
+      return;
+    }
+
+    req.user = user;
     next();
-  } catch {
-    return res.status(401).json({ message: "Invalid or expired token" });
+  } catch (error: any) {
+    res.status(401).json({ error: { message: error.message } });
   }
 };
