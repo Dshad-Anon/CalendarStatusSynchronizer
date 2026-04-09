@@ -31,7 +31,7 @@ export const getGoogleLoginAuthUrl = () => {
   });
 };
 
-export const getGoogleAuthUrl = () => {
+export const getGoogleAuthUrl = (state?: string) => {
   return oauth2Client.generateAuthUrl({
     access_type: "offline",
     scope: [
@@ -43,7 +43,8 @@ export const getGoogleAuthUrl = () => {
       "https://www.googleapis.com/auth/gmail.send",
       "https://www.googleapis.com/auth/gmail.modify"
     ],
-    prompt: "consent"
+    prompt: "consent",
+    state
   });
 };
 
