@@ -74,7 +74,7 @@ router.patch("/:id", authenticate, async (req: AuthRequest, res: Response): Prom
     const rule = await AutomationRule.findOneAndUpdate(
       { _id: req.params.id, userId: req.user._id },
       req.body,
-      { new: true }
+      { returnDocument: "after" }
     );
 
     if (!rule) {

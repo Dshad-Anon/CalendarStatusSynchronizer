@@ -50,7 +50,7 @@ export const updateRule = async (req: AuthRequest, res: Response) => {
     const rule = await Rule.findOneAndUpdate(
       { _id: id, userId: req.user?._id.toString() },
       updates,
-      { new: true }
+      { returnDocument: "after" }
     );
     if (!rule) {
       return res.status(404).json({ message: "Rule not found" });

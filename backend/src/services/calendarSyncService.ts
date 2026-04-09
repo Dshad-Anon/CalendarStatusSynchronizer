@@ -47,7 +47,7 @@ export const syncCalendar = async (userId: string): Promise<void> => {
       await CalendarEvent.findOneAndUpdate(
         { userId: user._id, googleEventId: event.id },
         eventData,
-        { upsert: true, new: true }
+        { upsert: true, returnDocument: "after" }
       );
     }
     user.lastSync = new Date();
