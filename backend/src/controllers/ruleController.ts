@@ -4,7 +4,7 @@ import Rule from "../models/Rule";
 
 export const createRule = async (req: AuthRequest, res: Response) => {
   try {
-    if (!req.userId) {
+    if (!req.user?._id) {
       return res.status(401).json({ message: "Unauthorized" });
     }
     const { name, conditions, actions } = req.body;
@@ -12,7 +12,7 @@ export const createRule = async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ message: "Name, conditions, and actions are required" });
     }
     const rule = await Rule.create({
-      userId: req.userId,
+      userId: req.user?._id.toString(),
       name,
       conditions,
       actions,
@@ -28,10 +28,10 @@ export const createRule = async (req: AuthRequest, res: Response) => {
 
 export const getRules = async (req: AuthRequest, res: Response) => {
   try {
-    if (!req.userId) {
+    if (!req.user?._id) {
       return res.status(401).json({ message: "Unauthorized" });
     }
-    const rules = await Rule.find({ userId: req.userId }).sort({ createdAt: -1 });
+    const rules = await Rule.find({ userId: req.user?._id.toString() }).sort({ createdAt: -1 });
     res.json({ rules });
   } catch (error) {
     console.error("Error fetching rules:", error);
@@ -41,14 +41,14 @@ export const getRules = async (req: AuthRequest, res: Response) => {
 
 export const updateRule = async (req: AuthRequest, res: Response) => {
   try {
-    if (!req.userId) {
+    if (!req.user?._id) {
       return res.status(401).json({ message: "Unauthorized" });
     }
     const { id } = req.params;
     const updates = req.body;
 
     const rule = await Rule.findOneAndUpdate(
-      { _id: id, userId: req.userId },
+      { _id: id, userId: req.user?._id.toString() },
       updates,
       { new: true }
     );
@@ -65,11 +65,11 @@ export const updateRule = async (req: AuthRequest, res: Response) => {
 
 export const deleteRule = async (req: AuthRequest, res: Response) => {
   try {
-    if (!req.userId) {
+    if (!req.user?._id) {
       return res.status(401).json({ message: "Unauthorized" });
     }
     const { id } = req.params;
-    const rule = await Rule.findOneAndDelete({ _id: id, userId: req.userId });
+    const rule = await Rule.findOneAndDelete({ _id: id, userId: req.user?._id.toString() });
     if (!rule) {
       return res.status(404).json({ message: "Rule not found" });
     }
