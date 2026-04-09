@@ -6,7 +6,7 @@ import { authenticate } from "./middleware/auth";
 import authRoutes from "./routes/auth";
 import calendarRoutes from "./routes/calendar";
 import oauthRoutes from "./routes/oauth";
-import ruleRoutes from "./routes/rule";
+import ruleRoutes from "./routes/rules";
 import settingsRoutes from "./routes/settings";
 
 dotenv.config();
