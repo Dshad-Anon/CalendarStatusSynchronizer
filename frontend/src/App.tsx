@@ -4,6 +4,8 @@ import { Calendar } from "./pages/Calendar";
 import { Dashboard } from "./pages/Dashboard";
 import { Login } from "./pages/Login";
 import { Register } from "./pages/Register";
+import Rules from "./pages/Rules";
+import Settings from "./pages/Settings";
 
 // Protected route wrapper to wrap the routes that require authentication.
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -31,6 +33,22 @@ function App() {
             element={
               <ProtectedRoute>
                 <Calendar />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/rules"
+            element={
+              <ProtectedRoute>
+                <Rules />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/settings"
+            element={
+              <ProtectedRoute>
+                <Settings />
               </ProtectedRoute>
             }
           />
