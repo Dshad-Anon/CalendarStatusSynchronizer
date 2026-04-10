@@ -10,4 +10,14 @@ export const oauthService = {
     const response = await api.get('/oauth/google/calendar');
     return response.data.authUrl;
   },
+  handleGoogleCallback: async (code: string) => {
+    const response = await api.get(`/oauth/google/callback?code=${code}`);
+    return response.data;
+  },
+
+  disconnectGoogle: async () => {
+    const response = await api.delete('/oauth/google');
+    return response.data;
+  },
+
 };
