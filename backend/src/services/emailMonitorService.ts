@@ -28,16 +28,41 @@ export const monitorUserEmails = async (userId: string): Promise<void> => {
 };
 
 export const monitorAllUsersEmails = async (): Promise<void> => {
-  const users = await User.find({
-    "emailAutoReply.enabled": true,
-    "googleTokens.accessToken": { $exists: true, $ne: null }
-  });
+  try {
+    const users = await User.find({
+      "emailAutoReply.enabled": true,
+      "googleTokens.accessToken": { $exists: true, $ne: null }
+    });
 
-  for (const user of users) {
-    try {
-      await monitorUserEmails(user._id.toString());
-    } catch (error: any) {
-      logger.error(`Email monitor failed for user ${user._id}:`, error);
+    if (users.length === 0) {
+      logger.info('No users with active email auto-reply found');
+      return;
     }
+
+    logger.info(`Monitoring emails for ${users.length} users`);
+
+    // Process emails for each user
+    for (const user of users) {
+      try {
+        // Check if auto-reply is still within time limit
+        if (user.emailAutoReply?.untilTime && new Date() > user.emailAutoReply.untilTime) {
+          // Auto-reply period has ended
+          user.emailAutoReply.enabled = false;
+          await user.save();
+          logger.info(`Auto-reply expired for user ${user._id}, disabling`);
+          continue;
+        }
+
+        await processUnreadEmails(user);
+      } catch (error: any) {
+        logger.error(`Failed to monitor emails for user ${user._id}:`, error);
+        // Continue with next user
+      }
+    }
+
+    logger.info('Email monitoring completed for all users');
+  } catch (error: any) {
+    logger.error('Failed to monitor user emails:', error);
+    throw error;
   }
 };

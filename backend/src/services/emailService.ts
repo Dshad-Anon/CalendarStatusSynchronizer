@@ -127,6 +127,7 @@ export const sendGmailAutoReply = async (
 
   // Mark original as read.
   await modifyGmailMessage(user, originalMessageId, undefined, ["UNREAD"]);
+  logger.info(`Gmail auto-reply sent to ${recipientEmail} for message ${originalMessageId}`);
 };
 
 export const processUnreadEmails = async (user: IUser): Promise<void> => {
