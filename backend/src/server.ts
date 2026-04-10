@@ -15,6 +15,7 @@ import oauthRoutes from "./routes/oauth";
 import ruleRoutes from "./routes/rules";
 import settingsRoutes from "./routes/settings";
 import { monitorAllUsersEmails } from "./services/emailMonitorService";
+import { processAllUsers } from "./services/statusUpdateService";
 import logger from "./utils/logger";
 
 dotenv.config();
@@ -83,6 +84,17 @@ app.get("/health", (req, res) => {
 
 // Connect to database and start server
 connectDatabase().then(() => {
+  // Evaluate current calendar events and matching rules to activate/deactivate runtime automations.
+  cron.schedule("*/2 * * * *", async () => {
+    try {
+      await processAllUsers();
+    } catch (error: unknown) {
+      logger.error("Scheduled status processor failed:", error);
+    }
+  });
+
+  logger.info("Scheduled status processor started (every 2 minutes)");
+
   // Poll every 2 minutes to process unread emails for users with automation enabled.
   cron.schedule("*/2 * * * *", async () => {
     try {

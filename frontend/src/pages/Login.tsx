@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { authService } from "../services/authService";
 import { oauthService } from "../services/oauthService";
@@ -10,13 +10,15 @@ export const Login = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const hasHandledGoogleCallback = useRef(false);
 
   // Handle Google OAuth callback
   useEffect(() => {
     const code = searchParams.get("code");
     const state = searchParams.get("state");
 
-    if (code && state === "google_login") {
+    if (code && state === "google_login" && !hasHandledGoogleCallback.current) {
+      hasHandledGoogleCallback.current = true;
       handleGoogleCallback(code);
     }
   }, [searchParams]);

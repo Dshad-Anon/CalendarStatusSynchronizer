@@ -14,14 +14,15 @@ import { getGoogleUserProfile, getTokensFromCode } from "../services/googleServi
 export const register = async (req: Request, res: Response) => {
   try {
     const { name, email, password } = req.body;
+    const normalizedEmail = String(email || "").toLowerCase().trim();
 
-    if (!name || !email || !password) {
+    if (!name || !normalizedEmail || !password) {
       return res.status(400).json({
         message: "Please provide name, email, and password"
       });
     }
 
-    const existingUser = await User.findOne({ email });
+    const existingUser = await User.findOne({ email: normalizedEmail });
     if (existingUser) {
       return res.status(400).json({ message: "User already exists" });
     }
@@ -30,7 +31,7 @@ export const register = async (req: Request, res: Response) => {
 
     const user = await User.create({
       name,
-      email,
+      email: normalizedEmail,
       password: hashedPassword
     });
 
@@ -59,14 +60,15 @@ export const register = async (req: Request, res: Response) => {
 export const login = async (req: Request, res: Response) => {
   try {
     const { email, password } = req.body;
+    const normalizedEmail = String(email || "").toLowerCase().trim();
 
-    if (!email || !password) {
+    if (!normalizedEmail || !password) {
       return res.status(400).json({
         message: "Please provide email and password. "
       });
     }
 
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email: normalizedEmail });
     if (!user || !user.password) {
       return res.status(401).json({ message: "Invalid user or password. Please try again." });
     }
@@ -119,17 +121,29 @@ export const googleLogin = async (req: Request, res: Response) => {
       });
     }
 
-    let user = await User.findOne({ email: googleProfile.email });
+    const normalizedEmail = googleProfile.email.toLowerCase().trim();
+
+    // Atomic upsert prevents duplicate-key races when callback is triggered more than once.
+    const user = await User.findOneAndUpdate(
+      { email: normalizedEmail },
+      {
+        $setOnInsert: {
+          name: googleProfile.name,
+          email: normalizedEmail
+        },
+        $set: {
+          googleId: googleProfile.googleId
+        }
+      },
+      {
+        upsert: true,
+        returnDocument: "after",
+        setDefaultsOnInsert: true
+      }
+    );
 
     if (!user) {
-      user = await User.create({
-        name: googleProfile.name,
-        email: googleProfile.email,
-        googleId: googleProfile.googleId
-      });
-    } else if (!user.googleId && googleProfile.googleId) {
-      user.googleId = googleProfile.googleId;
-      await user.save();
+      return res.status(500).json({ message: "Google Authentication Failed." });
     }
 
     const token = jwt.sign({ userId: user._id }, config.jwtSecret, { expiresIn: "1hr" });
