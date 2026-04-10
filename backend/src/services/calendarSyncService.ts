@@ -33,7 +33,7 @@ export const syncCalendar = async (userId: string): Promise<void> => {
         googleEventId: event.id,
         summary: event.summary || "Untitled Event",
         description: event.description || "",
-        startTIme: new Date(event.start.dateTime || event.start.date || ""),
+        startTime: new Date(event.start.dateTime || event.start.date || ""),
         endTime: new Date(event.end.dateTime || event.end.date || ""),
         location: event.location || "",
         attendees: event.attendees ? event.attendees.map(a => a.email || "") : [],

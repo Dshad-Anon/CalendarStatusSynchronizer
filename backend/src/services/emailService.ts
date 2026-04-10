@@ -1,4 +1,3 @@
-import AutomationRule from "../models/AutomationRule";
 import User, { type IUser } from "../models/User";
 import logger from "../utils/logger";
 import {
@@ -52,25 +51,6 @@ const shouldSkipAutoReply = (
 const getSenderEmail = (fromHeader: string): string => {
   const emailMatch = fromHeader.match(/<(.+?)>/) || fromHeader.match(/([^\s]+@[^\s]+)/);
   return emailMatch ? emailMatch[1] : fromHeader;
-};
-
-const findMatchingEmailRule = async (userId: string, subjectHeader: string) => {
-  const subject = subjectHeader.toLowerCase();
-
-  const rules = await AutomationRule.find({
-    userId,
-    enabled: true,
-    "actions.type": "email_auto_reply"
-  }).sort({ priority: -1 });
-
-  return rules.find((rule) =>
-    rule.conditions.every((c) => {
-      if (c.type !== "title_contains") return false;
-      const value = String(c.value).toLowerCase();
-      if (c.operator === "equals") return subject === value;
-      return subject.includes(value);
-    })
-  );
 };
 
 export const setEmailAutoReply = async (
@@ -131,12 +111,22 @@ export const sendGmailAutoReply = async (
 };
 
 export const processUnreadEmails = async (user: IUser): Promise<void> => {
-  if (!user.googleTokens?.accessToken || !user.emailAutoReply?.enabled) {
+  if (!user.googleTokens?.accessToken) {
+    logger.info(`User ${user._id} has no Google access token, skipping email processing`);
+    return;
+  }
+
+  if (!user.emailAutoReply?.enabled) {
+    logger.info(`Email auto-reply not enabled for user ${user._id}`);
     return;
   }
 
   const messages = await getGmailMessages(user, 20, "is:unread in:inbox");
-  if (!messages?.length) return;
+  if (!messages?.length) {
+    logger.info(`No unread emails found for user ${user._id}`);
+    return;
+  }
+  logger.info(`Processing ${messages.length} unread emails for user ${user._id}`);
 
   for (const message of messages) {
     if (!message.id) continue;
@@ -151,16 +141,10 @@ export const processUnreadEmails = async (user: IUser): Promise<void> => {
         continue;
       }
 
-      const matchingRule = await findMatchingEmailRule(user._id.toString(), subjectHeader);
-      if (!matchingRule) continue;
-
-      const emailAction = matchingRule.actions.find((a) => a.type === "email_auto_reply");
-      if (!emailAction) continue;
-
       const senderEmail = getSenderEmail(fromHeader);
-      const replySubject = emailAction.config.subject || `Re: ${subjectHeader}`;
+      const replySubject = user.emailAutoReply?.subject || `Re: ${subjectHeader}`;
       const replyMessage =
-        emailAction.config.autoReplyMessage ||
+        user.emailAutoReply?.message ||
         user.emailConfig.autoReplyMessage ||
         "I am currently unavailable and will respond as soon as possible.";
 
@@ -176,8 +160,7 @@ export const processUnreadEmails = async (user: IUser): Promise<void> => {
       await logStatusUpdate({
         userId: user._id.toString(),
         platform: "email",
-        action: "gmail_auto_reply_sent",
-        ruleId: matchingRule._id.toString()
+        action: "gmail_auto_reply_sent"
       });
     } catch (error: any) {
       logger.error(`Failed processing unread email for user ${user._id}:`, error);
