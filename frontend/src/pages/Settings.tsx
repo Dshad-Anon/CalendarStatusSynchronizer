@@ -9,12 +9,10 @@ const Settings: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [disconnecting, setDisconnecting] = useState(false);
-  const [saving, setSaving] = useState(false);
+  const [updatingAutoReply, setUpdatingAutoReply] = useState(false);
   const [googleConnected, setGoogleConnected] = useState(false);
-  const [emailEnabled, setEmailEnabled] = useState(true);
-  const [globalReplyTemplate, setGlobalReplyTemplate] = useState(
-    "I am doing {calendar.event}. I will get back to you by {calendar.eventEnd}."
-  );
+  const [emailEnabled, setEmailEnabled] = useState(false);
+  const [runtimeAutoReplyEnabled, setRuntimeAutoReplyEnabled] = useState(false);
 
   const loadSettings = async () => {
     try {
@@ -25,12 +23,9 @@ const Settings: React.FC = () => {
 
       const config = emailRes.data.emailConfig;
       setEmailEnabled(Boolean(config?.enabled));
-      setGlobalReplyTemplate(
-        config?.autoReplyMessage ||
-          "I am doing {calendar.event}. I will get back to you by {calendar.eventEnd}."
-      );
 
       setGoogleConnected(Boolean(autoReplyRes.data.googleConnected));
+      setRuntimeAutoReplyEnabled(Boolean(autoReplyRes.data.emailAutoReply?.enabled));
     } catch (error: unknown) {
       toast.error(getErrorMessage(error, "Failed to load settings"));
     }
@@ -87,18 +82,23 @@ const Settings: React.FC = () => {
     }
   };
 
-  const saveGlobalReply = async () => {
+  const updateAutoReplyFeature = async (enabled: boolean) => {
+    if (enabled && !googleConnected) {
+      toast.error("Please connect Google first before enabling auto-reply");
+      return;
+    }
+
     try {
-      setSaving(true);
+      setUpdatingAutoReply(true);
       await api.patch("/settings/email", {
-        enabled: emailEnabled,
-        autoReplyMessage: globalReplyTemplate
+        enabled
       });
-      toast.success("Global reply template saved");
+      setEmailEnabled(enabled);
+      toast.success(enabled ? "Auto-reply feature enabled" : "Auto-reply feature disabled");
     } catch (error: unknown) {
-      toast.error(getErrorMessage(error, "Failed to save global reply template"));
+      toast.error(getErrorMessage(error, "Failed to update auto-reply feature"));
     } finally {
-      setSaving(false);
+      setUpdatingAutoReply(false);
     }
   };
 
@@ -106,7 +106,9 @@ const Settings: React.FC = () => {
     <div className="p-4 sm:p-6 lg:p-8 max-w-3xl mx-auto">
       <div>
         <h1 className="text-3xl font-bold">Settings</h1>
-        <p className="text-gray-600 mt-1">Connect Google and set a reusable auto-reply template.</p>
+        <p className="text-gray-600 mt-1">
+          Connect Google, enable the feature, and let matching calendar rules activate replies at runtime.
+        </p>
       </div>
 
       <div className="card mt-6 space-y-4">
@@ -143,42 +145,38 @@ const Settings: React.FC = () => {
       </div>
 
       <div className="card mt-6 space-y-4">
-        <h2 className="text-xl font-semibold">Global Reply Template</h2>
+        <h2 className="text-xl font-semibold">Email Auto-Reply</h2>
+
+        <p className={`text-sm font-medium ${googleConnected ? "text-green-700" : "text-red-700"}`}>
+          Google Status: {googleConnected ? "Connected" : "Disconnected"}
+        </p>
+
+        <p className={`text-sm font-medium ${emailEnabled ? "text-green-700" : "text-gray-700"}`}>
+          Feature Switch: {emailEnabled ? "Enabled" : "Disabled"}
+        </p>
+
+        <p
+          className={`text-sm font-medium ${runtimeAutoReplyEnabled ? "text-green-700" : "text-gray-700"}`}
+        >
+          Runtime Status (rule matched): {runtimeAutoReplyEnabled ? "Active" : "Inactive"}
+        </p>
 
         <label className="flex items-center gap-2">
           <input
             type="checkbox"
             checked={emailEnabled}
-            onChange={(e) => setEmailEnabled(e.target.checked)}
+            onChange={(e) => {
+              void updateAutoReplyFeature(e.target.checked);
+            }}
+            disabled={updatingAutoReply}
           />
-          <span className="text-sm text-gray-700">Enable email automation module</span>
+          <span className="text-sm text-gray-700">Enable Auto-Reply Feature (master switch)</span>
         </label>
 
-        <textarea
-          className="input w-full"
-          rows={4}
-          value={globalReplyTemplate}
-          onChange={(e) => setGlobalReplyTemplate(e.target.value)}
-          placeholder="I am doing {calendar.event}. I will get back to you by {calendar.eventEnd}."
-        />
-
-        <div className="text-xs text-gray-600 space-y-1">
-          <p>Valid placeholders:</p>
-          <p>{"{calendar.event}"} = matched calendar event title</p>
-          <p>{"{calendar.eventEnd}"} = matched calendar event end time</p>
-          <p>
-            Example: I am doing {"{calendar.event}"}. I will get back to you by{" "}
-            {"{calendar.eventEnd}"}.
-          </p>
-        </div>
-
-        <button
-          className="btn-primary text-sm px-3 py-1.5"
-          onClick={saveGlobalReply}
-          disabled={saving}
-        >
-          {saving ? "Saving..." : "Save Template"}
-        </button>
+        <p className="text-xs text-gray-600">
+          The feature switch is saved in emailConfig.enabled. Runtime status is emailAutoReply.enabled and
+          becomes active only when a calendar event matches an enabled rule with email_auto_reply action.
+        </p>
       </div>
     </div>
   );

@@ -72,6 +72,17 @@ export const getGoogleUserProfile = async (accessToken: string) => {
   };
 };
 
+export const getGmailProfile = async (user: IUser) => {
+  const auth = await getGoogleClient(user);
+  const gmail = google.gmail({ version: "v1", auth });
+
+  const response = await gmail.users.getProfile({
+    userId: "me"
+  });
+
+  return response.data;
+};
+
 // Save Google tokens with encryption
 export const saveGoogleTokens = async (userId: string, tokens: any): Promise<void> => {
   const accessToken = encrypt(tokens.access_token);

@@ -123,6 +123,9 @@ export const processUserStatus = async (userId: string): Promise<void> => {
     const user = await User.findById(userId);
     if (!user) return;
 
+    // Refresh user's calendar cache before evaluating matching rules.
+    await calendarSyncService.syncCalendar(userId);
+
     const currentEvents = await calendarSyncService.getCurrentEvents(userId);
     if (!currentEvents.length) {
       if (user.slackTokens?.accessToken) {
