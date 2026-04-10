@@ -109,7 +109,7 @@ export const Rules: React.FC = () => {
         <div>
           <h1 className="text-3xl font-bold">Automation Rules</h1>
           <p className="text-gray-600 mt-1">
-            Rules trigger only when a subject matches your keyword condition.
+            Rules trigger when calendar event titles match your keyword condition.
           </p>
         </div>
         <button className="btn-primary inline-flex items-center" onClick={handleCreate}>

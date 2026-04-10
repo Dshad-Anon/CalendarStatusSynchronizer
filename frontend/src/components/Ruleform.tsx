@@ -56,7 +56,7 @@ const RuleForm: React.FC<RuleFormProps> = ({ rule, onClose, onSuccess }) => {
     })) || [{ type: "slack_status", config: { statusText: "", statusEmoji: ":calendar:" } }]
   }));
 
-  const conditionTypes = [{ value: "title_contains", label: "Email Subject" }];
+  const conditionTypes = [{ value: "title_contains", label: "Calendar Event Title" }];
 
   const actionTypes = [
     { value: "slack_status", label: "Update Slack Status" },
@@ -239,7 +239,7 @@ const RuleForm: React.FC<RuleFormProps> = ({ rule, onClose, onSuccess }) => {
                 </select>
                 <input
                   className="input"
-                  placeholder="keyword (e.g. invoice)"
+                  placeholder="keyword (e.g. meeting)"
                   value={condition.value}
                   onChange={(e) => updateCondition(index, "value", e.target.value)}
                 />
