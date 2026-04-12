@@ -7,24 +7,29 @@ import { getErrorMessage } from "../utils/errorMessage";
 
 const Settings: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [loading, setLoading] = useState(false);
-  const [disconnecting, setDisconnecting] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const [googleDisconnecting, setGoogleDisconnecting] = useState(false);
+  const [slackLoading, setSlackLoading] = useState(false);
+  const [slackDisconnecting, setSlackDisconnecting] = useState(false);
   const [updatingAutoReply, setUpdatingAutoReply] = useState(false);
   const [googleConnected, setGoogleConnected] = useState(false);
+  const [slackConnected, setSlackConnected] = useState(false);
   const [emailEnabled, setEmailEnabled] = useState(false);
   const [runtimeAutoReplyEnabled, setRuntimeAutoReplyEnabled] = useState(false);
 
   const loadSettings = async () => {
     try {
-      const [emailRes, autoReplyRes] = await Promise.all([
+      const [emailRes, autoReplyRes, connectionsRes] = await Promise.all([
         api.get("/settings/email"),
-        api.get("/settings/email/auto-reply")
+        api.get("/settings/email/auto-reply"),
+        api.get("/settings/connections")
       ]);
 
       const config = emailRes.data.emailConfig;
       setEmailEnabled(Boolean(config?.enabled));
 
       setGoogleConnected(Boolean(autoReplyRes.data.googleConnected));
+      setSlackConnected(Boolean(connectionsRes.data.slackConnected));
       setRuntimeAutoReplyEnabled(Boolean(autoReplyRes.data.emailAutoReply?.enabled));
     } catch (error: unknown) {
       toast.error(getErrorMessage(error, "Failed to load settings"));
@@ -44,15 +49,20 @@ const Settings: React.FC = () => {
       toast.success("Google Calendar connected successfully");
     }
 
+    if (success === "slack_connected") {
+      setSlackConnected(true);
+      toast.success("Slack connected successfully");
+    }
+
     if (error) {
       const errorMap: Record<string, string> = {
         no_code: "Google callback did not include an authorization code",
         missing_state: "OAuth state was missing from callback",
         invalid_state: "OAuth state was invalid or expired. Please try again",
         unauthorized: "Authentication required. Please log in again",
-        connection_failed: "Failed to connect Google Calendar"
+        connection_failed: "Failed to connect the selected account"
       };
-      toast.error(errorMap[error] || "Google connection failed");
+      toast.error(errorMap[error] || "Connection failed");
     }
 
     setSearchParams({}, { replace: true });
@@ -60,25 +70,49 @@ const Settings: React.FC = () => {
 
   const connectGoogle = async () => {
     try {
-      setLoading(true);
+      setGoogleLoading(true);
       const authUrl = await oauthService.getGoogleCalendarAuthUrl();
       window.location.href = authUrl;
     } catch (error: unknown) {
       toast.error(getErrorMessage(error, "Failed to start Google connection"));
-      setLoading(false);
+      setGoogleLoading(false);
     }
   };
 
   const disconnectGoogle = async () => {
     try {
-      setDisconnecting(true);
+      setGoogleDisconnecting(true);
       await oauthService.disconnectGoogle();
       setGoogleConnected(false);
       toast.success("Google account disconnected");
     } catch (error: unknown) {
       toast.error(getErrorMessage(error, "Failed to disconnect Google account"));
     } finally {
-      setDisconnecting(false);
+      setGoogleDisconnecting(false);
+    }
+  };
+
+  const connectSlack = async () => {
+    try {
+      setSlackLoading(true);
+      const authUrl = await oauthService.getSlackAuthUrl();
+      window.location.href = authUrl;
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, "Failed to start Slack connection"));
+      setSlackLoading(false);
+    }
+  };
+
+  const disconnectSlack = async () => {
+    try {
+      setSlackDisconnecting(true);
+      await oauthService.disconnectSlack();
+      setSlackConnected(false);
+      toast.success("Slack account disconnected");
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, "Failed to disconnect Slack account"));
+    } finally {
+      setSlackDisconnecting(false);
     }
   };
 
@@ -107,7 +141,7 @@ const Settings: React.FC = () => {
       <div>
         <h1 className="text-3xl font-bold">Settings</h1>
         <p className="text-gray-600 mt-1">
-          Connect Google, enable the feature, and let matching calendar rules activate replies at runtime.
+          Connect  Slack and Google Calendar to enable automatic status updates.
         </p>
       </div>
 
@@ -127,18 +161,49 @@ const Settings: React.FC = () => {
           <button
             className="btn-primary text-sm px-3 py-1.5"
             onClick={connectGoogle}
-            disabled={loading}
+            disabled={googleLoading}
           >
-            {loading ? "Redirecting..." : "Sync Google Calendar"}
+            {googleLoading ? "Redirecting..." : "Sync Google Calendar"}
           </button>
 
           {googleConnected && (
             <button
               className="btn-secondary text-sm px-3 py-1.5"
               onClick={disconnectGoogle}
-              disabled={disconnecting || loading}
+              disabled={googleDisconnecting || googleLoading}
             >
-              {disconnecting ? "Disconnecting..." : "Disconnect"}
+              {googleDisconnecting ? "Disconnecting..." : "Disconnect"}
+            </button>
+          )}
+        </div>
+      </div>
+
+      <div className="card mt-6 space-y-4">
+        <h2 className="text-xl font-semibold">Slack Integration</h2>
+        <p className="text-sm text-gray-600">
+          Connect Slack so your automation rules can update your status when calendar events change.
+        </p>
+
+        <p className={`text-sm font-medium ${slackConnected ? "text-green-700" : "text-amber-700"}`}>
+          Status: {slackConnected ? "Connected" : "Not connected"}
+        </p>
+
+        <div className="flex flex-wrap gap-2">
+          <button
+            className="btn-primary text-sm px-3 py-1.5"
+            onClick={connectSlack}
+            disabled={slackLoading}
+          >
+            {slackLoading ? "Redirecting..." : "Connect Slack"}
+          </button>
+
+          {slackConnected && (
+            <button
+              className="btn-secondary text-sm px-3 py-1.5"
+              onClick={disconnectSlack}
+              disabled={slackDisconnecting || slackLoading}
+            >
+              {slackDisconnecting ? "Disconnecting..." : "Disconnect"}
             </button>
           )}
         </div>
