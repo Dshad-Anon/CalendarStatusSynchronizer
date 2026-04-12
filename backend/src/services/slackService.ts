@@ -5,10 +5,20 @@ import User, { type IUser } from "../models/User";
 import { decrypt, encrypt } from "../utils/encryption";
 import logger from "../utils/logger";
 
-export const getAuthUrl = (): string => {
-  const scopes = ["users.profile:write", "users:write"].join(",");
+const getSlackRedirectUri = (): string => {
+  if (!config.slack.redirectUri) {
+    throw new Error("SLACK_REDIRECT_URI is not configured");
+  }
 
-  return `https://slack.com/oauth/v2/authorize?client_id=${config.slack.clientId}&scope=${scopes}&redirect_uri=${config.slack.redirectUri}`;
+  return config.slack.redirectUri;
+};
+
+export const getAuthUrl = (state?: string): string => {
+  const scopes = ["users.profile:write"].join(",");
+  const redirectUri = getSlackRedirectUri();
+
+  const stateParam = state ? `&state=${encodeURIComponent(state)}` : "";
+  return `https://slack.com/oauth/v2/authorize?client_id=${config.slack.clientId}&user_scope=${scopes}&redirect_uri=${redirectUri}${stateParam}`;
 };
 
 export const exchangeCodeForTokens = async (code: string) => {
@@ -17,7 +27,7 @@ export const exchangeCodeForTokens = async (code: string) => {
       client_id: config.slack.clientId,
       client_secret: config.slack.clientSecret,
       code,
-      redirect_uri: config.slack.redirectUri
+      redirect_uri: getSlackRedirectUri()
     }
   });
 
