@@ -255,5 +255,39 @@ router.post(
   }
 );
 
+/**
+ * @route GET /connections
+ * @description Retrieve live integration connection status for the authenticated user
+ * @param {Object} req - Express request object with authenticated user
+ * @param {Response} res - Express response object
+ * @returns {Object} Connection booleans and total count
+ */
+router.get("/connections", authenticate, async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    if (!req.user) {
+      res.status(401).json({ error: "Not authenticated" });
+      return;
+    }
+
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      res.status(404).json({ error: "User not found" });
+      return;
+    }
+
+    const googleConnected = !!user.googleTokens?.accessToken;
+    const slackConnected = !!user.slackTokens?.accessToken;
+    const count = [googleConnected, slackConnected].filter(Boolean).length;
+
+    res.json({
+      googleConnected,
+      slackConnected,
+      count
+    });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 
 export default router;

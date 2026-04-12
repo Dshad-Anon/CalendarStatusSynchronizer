@@ -75,15 +75,27 @@ export const Calendar = () => {
     loadUpcomingEvents();
   }, []);
 
+  useEffect(() => {
+    if (!syncMessage) return;
+
+    const timeoutId = window.setTimeout(() => {
+      setSyncMessage(null);
+    }, 3000);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [syncMessage]);
+
   const handleManualSync = async () => {
     setIsSyncing(true);
     setError(null);
     setSyncMessage(null);
 
     try {
-      await calendarService.syncCalendar();
+      const syncResult = await calendarService.syncCalendar();
       await loadUpcomingEvents();
-      setSyncMessage("Calendar synced successfully.");
+      setSyncMessage(syncResult?.message || "Calendar synced successfully.");
     } catch (err: any) {
       setError(err?.response?.data?.message || "Calendar sync failed");
     } finally {
@@ -104,19 +116,48 @@ export const Calendar = () => {
     a.localeCompare(b)
   );
 
+  const sortedEvents = [...events].sort(
+    (a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
+  );
+  const nextUpcomingEvent = sortedEvents[0];
+
   return (
     <div>
       <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <h1 className="text-3xl font-bold text-gray-900">Calendar</h1>
-        <button
-          type="button"
-          className="btn-primary"
-          onClick={handleManualSync}
-          disabled={isSyncing}
-        >
-          {isSyncing ? "Syncing..." : "Sync Calendar"}
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            className="btn-primary"
+            onClick={handleManualSync}
+            disabled={isSyncing}
+          >
+            {isSyncing ? "Syncing..." : "Sync Calendar"}
+          </button>
+          {syncMessage && (
+            <p className="rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-base font-semibold text-green-700 shadow-sm">
+              {syncMessage}
+            </p>
+          )}
+        </div>
       </div>
+
+      {!isLoading && nextUpcomingEvent && (
+        <div className="mb-6 rounded-xl border border-blue-200 bg-blue-50 p-4 shadow-sm">
+          <p className="text-xs font-semibold uppercase tracking-wide text-blue-600">Next Upcoming</p>
+          <p className="mt-1 text-lg font-semibold text-gray-900">{nextUpcomingEvent.summary}</p>
+          <p className="mt-1 text-sm text-gray-700">
+            {formatEventTime(
+              nextUpcomingEvent.startTime,
+              nextUpcomingEvent.endTime,
+              nextUpcomingEvent.isAllDay
+            )}
+          </p>
+          {nextUpcomingEvent.location && (
+            <p className="mt-1 text-sm text-gray-600">{nextUpcomingEvent.location}</p>
+          )}
+        </div>
+      )}
 
       <div className="card">
         <h2 className="mb-4 text-xl font-semibold text-gray-900">Upcoming Events</h2>
@@ -159,11 +200,6 @@ export const Calendar = () => {
           </p>
         )}
 
-        {syncMessage && (
-          <p className="mt-4 rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-700">
-            {syncMessage}
-          </p>
-        )}
       </div>
     </div>
   );

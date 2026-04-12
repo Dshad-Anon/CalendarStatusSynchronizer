@@ -72,6 +72,10 @@ export const getUpcomingCalendarEvents = async (req: AuthRequest, res: Response)
       return res.status(401).json({ message: 'Unauthorized' });
     }
 
+    if (!req.user.googleTokens?.accessToken) {
+      return res.json({ events: [] });
+    }
+
     const hours = Number(req.query.hours) || 24;
     const events = await getUpcomingEvents(req.user._id.toString(), hours);
 
