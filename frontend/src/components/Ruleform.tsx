@@ -63,6 +63,8 @@ const RuleForm: React.FC<RuleFormProps> = ({ rule, onClose, onSuccess }) => {
     { value: "email_auto_reply", label: "Email Auto-Reply" }
   ];
 
+  const emojiSuggestions = [":airplane:", ":coffee:", ":spiral_calendar_pad:", ":mute:",":palm_tree:"];
+
   const updateCondition = (index: number, field: keyof Condition, value: string) => {
     const conditions = [...formData.conditions];
     conditions[index] = { ...conditions[index], [field]: value };
@@ -299,10 +301,16 @@ const RuleForm: React.FC<RuleFormProps> = ({ rule, onClose, onSuccess }) => {
                     />
                     <input
                       className="input"
-                      placeholder=":calendar:"
+                      placeholder=":airplane: / :coffee: / :spiral_calendar_pad:"
+                      list="slack-emoji-suggestions"
                       value={action.config.statusEmoji || ""}
                       onChange={(e) => updateActionConfig(index, "statusEmoji", e.target.value)}
                     />
+                    <datalist id="slack-emoji-suggestions">
+                      {emojiSuggestions.map((emoji) => (
+                        <option key={emoji} value={emoji} />
+                      ))}
+                    </datalist>
                   </div>
                 )}
 

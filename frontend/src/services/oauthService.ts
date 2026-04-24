@@ -10,6 +10,10 @@ export const oauthService = {
     const response = await api.get('/oauth/google/calendar');
     return response.data.authUrl;
   },
+  getSlackAuthUrl: async () => {
+    const response = await api.get('/oauth/slack');
+    return response.data.authUrl;
+  },
   handleGoogleCallback: async (code: string) => {
     const response = await api.get(`/oauth/google/callback?code=${code}`);
     return response.data;
@@ -17,6 +21,11 @@ export const oauthService = {
 
   disconnectGoogle: async () => {
     const response = await api.delete('/oauth/google');
+    return response.data;
+  },
+
+  disconnectSlack: async () => {
+    const response = await api.delete('/oauth/slack');
     return response.data;
   },
 
